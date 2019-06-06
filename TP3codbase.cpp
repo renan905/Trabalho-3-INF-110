@@ -26,11 +26,13 @@ void clareamento(int valor, int altura, int largura, unsigned char imagem[][MAXL
 void negativo(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
 void espelharVertical(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
 void espelharHorizontal(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
-void tonsDeCinza(int tratamento, int altura, int largura, unsigned char imagem[MAXALTURA][MAXLARGURA] ,unsigned char imagemRgb[][MAXLARGURA][RGB]);
+void tonsDeCinza(int tratamento, int altura, int largura,unsigned char imagemRgb[][MAXLARGURA][RGB]);
 void escurecimento(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
 void clareamento(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
 void negativo(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
 void espelharVertical(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
+void espelharHorizontal(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
+
 
 int main() {
 	int largura, altura;				 //dimensoes da imagem
@@ -151,12 +153,16 @@ int main() {
 				break;
 			case 3:
 				negativo(valor, altura, largura, imagemRgb);
+				break;
 			case 4:
 				espelharVertical(valor, altura, largura, imagemRgb);
+				break;
 			case 5:
-				espelharHorizontal(valor, altura, largura, imagem);
+				espelharHorizontal(valor, altura, largura, imagemRgb);
+				break;
 			case 6:
-				tonsDeCinza(tratamento, altura, largura, imagem, imagemRgb);
+				tonsDeCinza(tratamento, altura, largura, imagemRgb);
+				break;
 			default:
 				break;
 		}
@@ -174,8 +180,10 @@ int main() {
 				break;
 			case 3:
 				negativo(valor, altura, largura, imagem);
+				break;
 			case 4:
 				espelharVertical(valor, altura, largura, imagem);
+				break;
 			case 5:
 				espelharHorizontal(valor, altura, largura, imagem);
 			default:
@@ -342,8 +350,7 @@ void negativo(int valor, int altura, int largura, unsigned char imagemRgb[][MAXL
 	for (int i = 0; i < altura; i++){
 		for (int j = 0; j < largura; j++){
 			for (int k = 0; k < RGB; k++){
-				valor = (int)imagemRgb[i][j][k]; //pega o valor do pi
-				valor = 255 - valor;
+				valor = 255 - (int)imagemRgb[i][j][k]; 
 				imagemRgb[i][j][k] = (unsigned char)valor;
 			}
 		}
@@ -374,7 +381,7 @@ void espelharVertical(int valor, int altura, int largura, unsigned char imagemRg
 	}
 }
 
-//funcao 
+//funcao para imagens em tons de cinza
 void espelharHorizontal(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]){
 	for (int i = 0; i < altura/2; i++){
 		for (int j = 0; j < (largura); j++){
@@ -385,7 +392,20 @@ void espelharHorizontal(int valor, int altura, int largura, unsigned char imagem
 	}
 }
 
-void tonsDeCinza(int tratamento, int altura, int largura, unsigned char imagem[][MAXLARGURA] ,unsigned char imagemRgb[][MAXLARGURA][RGB]){
+//funcao para imagens coloridas
+void espelharHorizontal(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]){
+	for (int i = 0; i < altura/2; i++){
+		for (int j = 0; j < (largura); j++){
+			for (int k = 0; k < RGB; k++){
+				valor = (int)imagemRgb[altura-1-i][j][k];
+				imagemRgb[altura-1-i][j][k] = imagemRgb[i][j][k];
+				imagemRgb[i][j][k] = (unsigned char)valor;
+			}
+		}
+	}
+}
+
+void tonsDeCinza(int tratamento, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]){
 	int corCinza;
 
 	for (int i = 0; i < altura; i++){
