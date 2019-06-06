@@ -10,6 +10,7 @@
 #include <fstream>
 #include <cstring>
 #include <string>
+#include <cmath>
 
 const int MAXALTURA = 500; //tamanho maximo aceito (pode ser alterado)
 const int MAXLARGURA = 500;
@@ -17,6 +18,9 @@ const int RGB = 3;
 
 unsigned char imagem[MAXALTURA][MAXLARGURA]; //a imagem propriamente dita
 unsigned char imagemRgb[MAXALTURA][MAXLARGURA][RGB];
+unsigned char sobelM[MAXALTURA][MAXLARGURA][RGB];
+unsigned char z[MAXALTURA][MAXLARGURA][RGB];
+unsigned char y[MAXALTURA][MAXLARGURA][RGB];
 
 using namespace std;
 
@@ -32,7 +36,7 @@ void clareamento(int valor, int altura, int largura, unsigned char imagemRgb[][M
 void negativo(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
 void espelharVertical(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
 void espelharHorizontal(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
-
+void sobel(int altura, int largura);
 
 int main() {
 	int largura, altura;				 //dimensoes da imagem
@@ -137,7 +141,7 @@ int main() {
 	//*** TRATAMENTO DA IMAGEM ***//
 
 	cout << endl << "Qual da seguintes acoes voce quer execultar?\n";
-	cout << endl << "0 - Sair\n1 - Escurecer\n2 - Clarear \n3 - Negativo\n4 - Espelhar Vertical\n5 - Espelhar Horizontal\n6 - Tons de Cinza\n";
+	cout << endl << "0 - Sair\n1 - Escurecer\n2 - Clarear \n3 - Negativo\n4 - Espelhar Vertical\n5 - Espelhar Horizontal\n6 - Tons de Cinza\n7 - Sobel\n";
 	cin >> tratamentoNumero;
 
 
@@ -163,6 +167,9 @@ int main() {
 			case 6:
 				tonsDeCinza(tratamento, altura, largura, imagemRgb);
 				break;
+			case 7:
+				sobel(altura, largura);
+				break;
 			default:
 				break;
 		}
@@ -186,6 +193,10 @@ int main() {
 				break;
 			case 5:
 				espelharHorizontal(valor, altura, largura, imagem);
+				break;
+			case 6:
+				sobel(altura, largura);
+				break;
 			default:
 				break;
 		}
@@ -421,3 +432,108 @@ void tonsDeCinza(int tratamento, int altura, int largura, unsigned char imagemRg
 		}
 	}
 }
+
+void sobel(int altura, int largura){
+
+    float kernelX[3][3] =
+    { { -1, 0, 1 },
+      { -2, 0, 2 },
+      { -1, 0, 1 } };
+
+    float kernelY[3][3] =
+    { { -1, -2, -1 },
+      { 0,  0,  0 },
+      { 1,  2,  1 } };
+
+	for(int i = 0; i < altura; i++) { 
+		for(int j = 0; j < largura; j++) {
+			for(int k = 0; k < RGB; k++) {
+
+				if(i == 0 && j == 0){
+					z[i][j][k] = (int)(imagemRgb[i][j+1][k] * -2 + imagemRgb[i+1][j+1][k] * -1);
+				} 
+				else if (i == 0 && j == largura -1){
+					z[i][j][k] = (int)(imagemRgb[i][j - 1][k] * 2 + imagemRgb[i + 1][j - 1][k]);
+				} 
+				
+				else if (i == altura - 1 && j == 0) {
+					z[i][j][k] = (int)(imagemRgb[i - 1][j + 1][k] * -1 + imagemRgb[i][j + 1][k] * -2);
+				} else if (i == altura -1 && j == largura -1) {
+					z[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i][j - 1][k] * 2);
+				} else if (i == 0) {
+					z[i][j][k] = (int)(imagemRgb[i][j - 1][k] * 2 + imagemRgb[i][j + 1][k] * -2 + imagemRgb[i + 1][j - 1][k] + imagemRgb[i + 1][j + 1][k] * -1);
+				} else if (j == 0) {
+					z[i][j][k] = (int)(imagemRgb[i - 1][j + 1][k] * -1 + imagemRgb[i][j + 1][k] * -2 + imagemRgb[i + 1][j + 1][k] * -1);
+				} else if (i == altura - 1) {
+					z[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j + 1][k] * -1 + imagemRgb[i][j - 1][k] * 2 + imagemRgb[i][j + 1][k] * -2);
+				} else if (j == largura -1) {
+					z[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i][j - 1][k] * 2 + imagemRgb[i + 1][j - 1][k]);
+				} else {
+					z[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j + 1][k] * -1 + imagemRgb[i][j - 1][k] * 2 + imagemRgb[i][j + 1][k] * -2 + imagemRgb[i + 1][j - 1][k] + imagemRgb[i + 1][j + 1][k] * -1);
+				}
+				/* 
+				if (z[i][j][k] < 0) {
+					z[i][j][k] = 0;
+				}
+				if (z[i][j][k] > 255) {
+					z[i][j][k] = 255;
+				}*/
+				
+				if(i == 0 && j == 0) {
+					y[i][j][k] = (int)(imagemRgb[i + 1][j][k] * -2 + imagemRgb[i+1][j+1][k] * -1);
+				} else if (i == 0 && j == largura -1) {
+					y[i][j][k] = (int)(imagemRgb[i + 1][j - 1][k] * -1 + imagemRgb[i + 1][j][k] * -2);
+				} else if (i == altura - 1 && j == 0) {
+					y[i][j][k] = (int)(imagemRgb[i - 1][j][k] * 2 + imagemRgb[i - 1][j + 1][k]);
+				} else if (i == altura -1 && j == largura -1) {
+					y[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j][k] * 2);
+				} else if (i == 0) {
+					y[i][j][k] = (int)(imagemRgb[i + 1][j - 1][k] * -1 + imagemRgb[i + 1][j][k] * -2 + imagemRgb[i + 1][j + 1][k] * -1);
+				} else if (j == 0) {
+					y[i][j][k] = (int)(imagemRgb[i - 1][j][k] * 2 + imagemRgb[i - 1][j + 1][k] + imagemRgb[i + 1][j][k] * -2 + imagemRgb[i + 1][j + 1][k] * -1);
+				} else if (i == altura - 1) {
+					y[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j][k] * 2 + imagemRgb[i - 1][j + 1][k]);
+				} else if (j == largura -1) {
+					y[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j][k] * 2 + imagemRgb[i + 1][j - 1][k] * -1 + imagemRgb[i + 1][j][k] * -2);
+				} else {
+					y[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j][k] * 2 + imagemRgb[i - 1][j + 1][k] + imagemRgb[i + 1][j - 1][k] * -1 + imagemRgb[i + 1][j][k] * -2 + imagemRgb[i + 1][j + 1][k] * -1);
+				}
+				/* 
+				if (y[i][j][k] < 0) {
+					y[i][j][k] = 0;
+				}
+				if (y[i][j][k] > 255) {
+					y[i][j][k] = 255;
+				}
+				*/
+			}
+		}
+	}
+	for(int i = 0; i < altura; i++) {
+		for(int j = 0; j < largura; j++) {
+			for(int k = 0; k < RGB; k++) {
+				sobelM[i][j][k] = sqrt(z[i][j][k]*z[i][j][k] + y[i][j][k]*y[i][j][k]);
+				if (sobelM[i][j][k] > 255) {
+					sobelM[i][j][k] = 255;
+				}
+				if (sobelM[i][j][k] < 0) {
+					sobelM[i][j][k] = 0;
+				}
+
+				imagemRgb[i][j][k] = sobelM[i][j][k];
+				
+			}
+		}
+	}
+	/*
+	for(int i = 0; i < altura; i++) {
+		for(int j = 0; j < largura; j++) {
+			for(int k = 0; k < RGB; k++) {
+				imagemRgb[i][j][k] = (unsigned char)sobelM[i][j][k]; // Sobrescreve a imagem com as mudancas;
+			}
+		}
+	}
+	*/
+}
+  
+
