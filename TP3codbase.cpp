@@ -19,8 +19,8 @@ const int RGB = 3;
 unsigned char imagem[MAXALTURA][MAXLARGURA]; //a imagem propriamente dita
 unsigned char imagemRgb[MAXALTURA][MAXLARGURA][RGB];
 unsigned char sobelM[MAXALTURA][MAXLARGURA][RGB];
-unsigned char z[MAXALTURA][MAXLARGURA][RGB];
-unsigned char y[MAXALTURA][MAXLARGURA][RGB];
+int sobelX[MAXALTURA][MAXLARGURA][RGB];
+int sobelY[MAXALTURA][MAXLARGURA][RGB];
 
 using namespace std;
 
@@ -36,7 +36,7 @@ void clareamento(int valor, int altura, int largura, unsigned char imagemRgb[][M
 void negativo(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
 void espelharVertical(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
 void espelharHorizontal(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
-void sobel(int altura, int largura);
+void sobel(int altura, int largura, unsigned char imagem[][MAXLARGURA][RGB]);
 
 int main() {
 	int largura, altura;				 //dimensoes da imagem
@@ -168,7 +168,7 @@ int main() {
 				tonsDeCinza(tratamento, altura, largura, imagemRgb);
 				break;
 			case 7:
-				sobel(altura, largura);
+				sobel(altura, largura, imagemRgb);
 				break;
 			default:
 				break;
@@ -195,7 +195,7 @@ int main() {
 				espelharHorizontal(valor, altura, largura, imagem);
 				break;
 			case 6:
-				sobel(altura, largura);
+				sobel(altura, largura, imagemRgb);
 				break;
 			default:
 				break;
@@ -211,8 +211,17 @@ int main() {
 
 	string novaImagem;
 	char salvarNovo = false;
-	cout << "Deseja salvar o arquivo como uma nova imagem? (S / N) \n";
-	cin >> salvarNovo;
+	while (true){
+		cout << "Deseja salvar o arquivo como uma nova imagem? (S / N) \n";
+		cin >> salvarNovo;
+
+		if (salvarNovo == 'S' || salvarNovo == 's' || salvarNovo == 'N' || salvarNovo == 'N'){
+			break;
+		}
+		else{
+			cout << "Valor invalido. Tente novamente\n";
+		}
+	}
 
 	if (salvarNovo == 'S' || salvarNovo == 's'){
 		cout << "Como deseja chamar sua nova imagem?\n";
@@ -433,7 +442,8 @@ void tonsDeCinza(int tratamento, int altura, int largura, unsigned char imagemRg
 	}
 }
 
-void sobel(int altura, int largura){
+void sobel(int altura, int largura, unsigned char imagem[][MAXLARGURA][RGB]){
+	int valorSobelX = 0, valorSobelY = 0;
 
     float kernelX[3][3] =
     { { -1, 0, 1 },
@@ -445,95 +455,50 @@ void sobel(int altura, int largura){
       { 0,  0,  0 },
       { 1,  2,  1 } };
 
-	for(int i = 0; i < altura; i++) { 
-		for(int j = 0; j < largura; j++) {
+
+	for(int i = 1; i < altura - 1; i++) { 
+		for(int j = 1; j < largura - 1; j++) {
 			for(int k = 0; k < RGB; k++) {
 
-				if(i == 0 && j == 0){
-					z[i][j][k] = (int)(imagemRgb[i][j+1][k] * -2 + imagemRgb[i+1][j+1][k] * -1);
-				} 
-				else if (i == 0 && j == largura -1){
-					z[i][j][k] = (int)(imagemRgb[i][j - 1][k] * 2 + imagemRgb[i + 1][j - 1][k]);
-				} 
+				sobelX[i][j][k] = (int)(imagemRgb[i-1][j-1][k] * kernelX[1][1] + imagemRgb[i-1][j+1][k] * kernelX[1][3] + imagemRgb[i][j-1][k] * kernelX[2][1] + imagemRgb[i][j+1][k] * kernelX[2][3] + imagemRgb[i+1][j-1][k] * kernelX[3][1] + imagemRgb[i+1][j+1][k] * kernelX[3][3]);
+
+				//valorSobelX = sqrt(valorSobelX * valorSobelX); 
+				//cout << sobelX[i][j][k] << endl;
+
+				if (sobelX[i][j][k] > 225) sobelX[i][j][k] = 255;
+				if (sobelX[i][j][k] < 0) sobelX[i][j][k]= 0;
 				
-				else if (i == altura - 1 && j == 0) {
-					z[i][j][k] = (int)(imagemRgb[i - 1][j + 1][k] * -1 + imagemRgb[i][j + 1][k] * -2);
-				} else if (i == altura -1 && j == largura -1) {
-					z[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i][j - 1][k] * 2);
-				} else if (i == 0) {
-					z[i][j][k] = (int)(imagemRgb[i][j - 1][k] * 2 + imagemRgb[i][j + 1][k] * -2 + imagemRgb[i + 1][j - 1][k] + imagemRgb[i + 1][j + 1][k] * -1);
-				} else if (j == 0) {
-					z[i][j][k] = (int)(imagemRgb[i - 1][j + 1][k] * -1 + imagemRgb[i][j + 1][k] * -2 + imagemRgb[i + 1][j + 1][k] * -1);
-				} else if (i == altura - 1) {
-					z[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j + 1][k] * -1 + imagemRgb[i][j - 1][k] * 2 + imagemRgb[i][j + 1][k] * -2);
-				} else if (j == largura -1) {
-					z[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i][j - 1][k] * 2 + imagemRgb[i + 1][j - 1][k]);
-				} else {
-					z[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j + 1][k] * -1 + imagemRgb[i][j - 1][k] * 2 + imagemRgb[i][j + 1][k] * -2 + imagemRgb[i + 1][j - 1][k] + imagemRgb[i + 1][j + 1][k] * -1);
-				}
-				/* 
-				if (z[i][j][k] < 0) {
-					z[i][j][k] = 0;
-				}
-				if (z[i][j][k] > 255) {
-					z[i][j][k] = 255;
-				}*/
-				
-				if(i == 0 && j == 0) {
-					y[i][j][k] = (int)(imagemRgb[i + 1][j][k] * -2 + imagemRgb[i+1][j+1][k] * -1);
-				} else if (i == 0 && j == largura -1) {
-					y[i][j][k] = (int)(imagemRgb[i + 1][j - 1][k] * -1 + imagemRgb[i + 1][j][k] * -2);
-				} else if (i == altura - 1 && j == 0) {
-					y[i][j][k] = (int)(imagemRgb[i - 1][j][k] * 2 + imagemRgb[i - 1][j + 1][k]);
-				} else if (i == altura -1 && j == largura -1) {
-					y[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j][k] * 2);
-				} else if (i == 0) {
-					y[i][j][k] = (int)(imagemRgb[i + 1][j - 1][k] * -1 + imagemRgb[i + 1][j][k] * -2 + imagemRgb[i + 1][j + 1][k] * -1);
-				} else if (j == 0) {
-					y[i][j][k] = (int)(imagemRgb[i - 1][j][k] * 2 + imagemRgb[i - 1][j + 1][k] + imagemRgb[i + 1][j][k] * -2 + imagemRgb[i + 1][j + 1][k] * -1);
-				} else if (i == altura - 1) {
-					y[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j][k] * 2 + imagemRgb[i - 1][j + 1][k]);
-				} else if (j == largura -1) {
-					y[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j][k] * 2 + imagemRgb[i + 1][j - 1][k] * -1 + imagemRgb[i + 1][j][k] * -2);
-				} else {
-					y[i][j][k] = (int)(imagemRgb[i - 1][j - 1][k] + imagemRgb[i - 1][j][k] * 2 + imagemRgb[i - 1][j + 1][k] + imagemRgb[i + 1][j - 1][k] * -1 + imagemRgb[i + 1][j][k] * -2 + imagemRgb[i + 1][j + 1][k] * -1);
-				}
-				/* 
-				if (y[i][j][k] < 0) {
-					y[i][j][k] = 0;
-				}
-				if (y[i][j][k] > 255) {
-					y[i][j][k] = 255;
-				}
-				*/
+				sobelY[i][j][k] = (int)(imagemRgb[i-1][j-1][k] * kernelY[1][1] + imagemRgb[i-1][j][k] * kernelY[1][2] + imagemRgb[i-1][j+1][k] * kernelY[1][3] + imagemRgb[i+1][j-1][k] * kernelY[3][1] + imagemRgb[i+1][j][k] * kernelY[3][2] + imagemRgb[i+1][j+1][k] * kernelY[3][3]);
+
+				if (sobelY[i][j][k] > 225) sobelY[i][j][k] = 255;
+				if (sobelY[i][j][k] < 0) sobelY[i][j][k]= 0;
+
+			}			
+		}
+	}
+
+	int valor;
+
+	for(int i = 1; i < altura -1; i++) {
+		for(int j = 1; j < largura -1; j++) {
+			for(int k = 0; k < RGB; k++) {
+				sobelM[i][j][k] = (sobelX[i][j][k] + sobelY[i][j][k]) / 2;
+
+				//sobelM[i][j][k] = sqrt(sobelX[i][j][k]*sobelX[i][j][k] + sobelY[i][j][k]*sobelY[i][j][k]);
+
 			}
 		}
 	}
-	for(int i = 0; i < altura; i++) {
-		for(int j = 0; j < largura; j++) {
-			for(int k = 0; k < RGB; k++) {
-				sobelM[i][j][k] = sqrt(z[i][j][k]*z[i][j][k] + y[i][j][k]*y[i][j][k]);
-				if (sobelM[i][j][k] > 255) {
-					sobelM[i][j][k] = 255;
-				}
-				if (sobelM[i][j][k] < 0) {
-					sobelM[i][j][k] = 0;
-				}
 
-				imagemRgb[i][j][k] = sobelM[i][j][k];
-				
-			}
-		}
-	}
-	/*
-	for(int i = 0; i < altura; i++) {
-		for(int j = 0; j < largura; j++) {
+	for(int i = 1; i < altura -1; i++) {
+		for(int j = 1; j < largura -1; j++) {
 			for(int k = 0; k < RGB; k++) {
 				imagemRgb[i][j][k] = (unsigned char)sobelM[i][j][k]; // Sobrescreve a imagem com as mudancas;
 			}
 		}
 	}
-	*/
+	
+
 }
   
 
