@@ -5,6 +5,7 @@
 // Autores: Andre Gustavo dos Santos         (criado em 16/06/14)
 //          Andre Gustavo dos Santos         (modificado em 22/05/18)
 //          Andre Gustavo dos Santos         (modificado em 21/05/19)
+//			Renan Lopes Silva				(modificado em 08/06/2019)
 
 #include <iostream>
 #include <fstream>
@@ -12,41 +13,56 @@
 #include <string>
 #include <cmath>
 
-const int MAXALTURA = 500; //tamanho maximo aceito (pode ser alterado)
-const int MAXLARGURA = 500;
-const int RGB = 3;
+using namespace std;
 
-unsigned char imagem[MAXALTURA][MAXLARGURA]; //a imagem propriamente dita
+//tamanho maximo aceito (pode ser alterado)
+const int MAXALTURA = 3000; 
+const int MAXLARGURA = 3000;
+const int RGB = 3; //NAO PODE SER ALTERADO
+
+unsigned char imagem[MAXALTURA][MAXLARGURA];
 unsigned char imagemRgb[MAXALTURA][MAXLARGURA][RGB];
 unsigned char sobelM[MAXALTURA][MAXLARGURA][RGB];
 int sobelX[MAXALTURA][MAXLARGURA][RGB];
 int sobelY[MAXALTURA][MAXLARGURA][RGB];
 
-using namespace std;
 
-// FUNCOES
+
+//Funcoes
+
 void escurecimento(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
-void clareamento(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
-void negativo(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
-void espelharVertical(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
-void espelharHorizontal(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
-void tonsDeCinza(int tratamento, int altura, int largura,unsigned char imagemRgb[][MAXLARGURA][RGB]);
 void escurecimento(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
+
+void clareamento(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
 void clareamento(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
+
+void negativo(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
 void negativo(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
+
+void espelharVertical(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
 void espelharVertical(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
+
+void espelharHorizontal(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]);
 void espelharHorizontal(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
-void sobel(int altura, int largura, unsigned char imagem[][MAXLARGURA][RGB]);
+
+void tonsDeCinza(int tratamento, int altura, int largura,unsigned char imagemRgb[][MAXLARGURA][RGB]);
+
+void sobel(int altura, int largura, unsigned char imagem[][MAXLARGURA]);
+void sobel(int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]);
+
+void mudancaDeCor(int altura, int largura, int valor);
+int fatorValidacao();
 
 int main() {
-	int largura, altura;				 //dimensoes da imagem
-	char tipo[4];						 //tipo da imagem
-	ifstream arqentrada;				 //arquivo que contem a imagem original
-	ofstream arqsaida;					 //arquivo que contera a imagem gerada
-	char comentario[200], c;			//auxiliares
-	int i, j, k, tratamento, valor;	//auxiliares
+	int largura, altura;                  //dimensoes da imagem
+	char tipo[4];						  //tipo da imagem
+	ifstream arqentrada;				  //arquivo que contem a imagem original
+	ofstream arqsaida;					  //arquivo que contera a imagem gerada
+	char comentario[200], c;			  //auxiliares
+	int i, j, k, tratamento, valor;	      //auxiliares
 	int tratamentoNumero;
 	string nomeArquivo; 
+	bool sair = false;
 
 	//*** LEITURA DA IMAGEM ***//
 	//inicialmente nao sera necessario entender nem mudar nada nesta parte
@@ -71,6 +87,7 @@ int main() {
 	arqentrada.get();		//Le e descarta o \n do final da 1a. linha
 	int tipoImagem;
 	cout << tipo;
+
 	if (strcmp(tipo, "P2") == 0){
 		cout << "Imagem em tons de cinza\n";
 		tipoImagem = 2;
@@ -89,11 +106,10 @@ int main() {
 	}
 
 	
-	while ((c = arqentrada.get()) == '#')	//Enquanto for comentario
-		arqentrada.getline(comentario, 200); //Le e descarta a linha "inteira"
+	while ((c = arqentrada.get()) == '#')	   //Enquanto for comentario
+		arqentrada.getline(comentario, 200);   //Le e descarta a linha "inteira"
 
-	arqentrada.putback(c); //Devolve o caractere lido para a entrada, pois como
-												 //nao era comentario, era o primeiro digito da largura
+	arqentrada.putback(c);                     //Devolve o caractere lido para a entrada, pois como nao era comentario, era o primeiro digito da largura
 
 	arqentrada >> largura >> altura; //Le o numero de pixels da horizontal e vertical
 	cout << "Tamanho: " << largura << " x " << altura << endl;
@@ -112,7 +128,7 @@ int main() {
 	
 	arqentrada >> valor; //Valor maximo do pixel (temos que ler, mas nao sera usado)
 	//****************************//
-	// EXCLUIR DEPOIS //
+	
 	//*** Leitura dos pixels da imagem ***//
 	if (tipoImagem == 2)
 		for (int i = 0; i < altura; i++)
@@ -138,68 +154,106 @@ int main() {
 
 	//*** FIM DA LEITURA DA IMAGEM ***//
 
+
 	//*** TRATAMENTO DA IMAGEM ***//
 
-	cout << endl << "Qual da seguintes acoes voce quer execultar?\n";
-	cout << endl << "0 - Sair\n1 - Escurecer\n2 - Clarear \n3 - Negativo\n4 - Espelhar Vertical\n5 - Espelhar Horizontal\n6 - Tons de Cinza\n7 - Sobel\n";
-	cin >> tratamentoNumero;
 
+	while(true){
 
-	if (tipoImagem == 3){ // caso a imagem seja colorida
-		switch (tratamentoNumero){
-			case 0:
-				break;
-			case 1:
-				escurecimento(valor, altura, largura, imagemRgb);
-				break;
-			case 2:
-				clareamento(valor, altura, largura, imagemRgb);
-				break;
-			case 3:
-				negativo(valor, altura, largura, imagemRgb);
-				break;
-			case 4:
-				espelharVertical(valor, altura, largura, imagemRgb);
-				break;
-			case 5:
-				espelharHorizontal(valor, altura, largura, imagemRgb);
-				break;
-			case 6:
-				tonsDeCinza(tratamento, altura, largura, imagemRgb);
-				break;
-			case 7:
-				sobel(altura, largura, imagemRgb);
-				break;
-			default:
-				break;
+		if (tipoImagem == 3){ 
+			cout << endl << "Qual da seguintes acoes voce quer execultar?\n";
+			cout << endl << "0 - Sair\n1 - Escurecer\n2 - Clarear \n3 - Negativo\n4 - Espelhar Vertical\n5 - Espelhar Horizontal\n6 - Tons de Cinza\n7 - Sobel\n8 - Mundanca de Cor\n";
+			cin >> tratamentoNumero;
 		}
-	}	
-	else{ // caso a imagem nao seja colirida
-
-		switch (tratamentoNumero){
-			case 0:
-				break;
-			case 1:
-				escurecimento(valor, altura, largura, imagem);
-				break;
-			case 2:
-				clareamento(valor, altura, largura, imagem);
-				break;
-			case 3:
-				negativo(valor, altura, largura, imagem);
-				break;
-			case 4:
-				espelharVertical(valor, altura, largura, imagem);
-				break;
-			case 5:
-				espelharHorizontal(valor, altura, largura, imagem);
-				break;
-			case 6:
-				sobel(altura, largura, imagemRgb);
-				break;
-			default:
-				break;
+		if (tipoImagem == 2){
+			cout << endl << "Qual da seguintes acoes voce quer execultar?\n";
+			cout << endl << "0 - Sair\n1 - Escurecer\n2 - Clarear \n3 - Negativo\n4 - Espelhar Vertical\n5 - Espelhar Horizontal\n6 - Sobel\n";
+			cin >> tratamentoNumero;
 		}
+		cout << endl;
+
+		// caso a imagem seja colorida
+		if (tipoImagem == 3){ 
+			switch (tratamentoNumero){
+				case 0:
+					sair = true;
+					break;
+				case 1:
+					escurecimento(valor, altura, largura, imagemRgb);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 2:
+					clareamento(valor, altura, largura, imagemRgb);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 3:
+					negativo(valor, altura, largura, imagemRgb);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 4:
+					espelharVertical(valor, altura, largura, imagemRgb);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 5:
+					espelharHorizontal(valor, altura, largura, imagemRgb);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 6:
+					tonsDeCinza(tratamento, altura, largura, imagemRgb);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 7:
+					sobel(altura, largura, imagemRgb);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 8:
+					mudancaDeCor(altura, largura, valor);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				default:
+					cout << "---- Opcao invalida ----\n";
+					break;
+			}
+		}	
+
+		// caso a imagem nao seja colirida
+		if (tipoImagem == 2){ 
+
+			switch (tratamentoNumero){
+				case 0:
+					sair = true;
+					break;
+				case 1:
+					escurecimento(valor, altura, largura, imagem);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 2:
+					clareamento(valor, altura, largura, imagem);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 3:
+					negativo(valor, altura, largura, imagem);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 4:
+					espelharVertical(valor, altura, largura, imagem);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 5:
+					espelharHorizontal(valor, altura, largura, imagem);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				case 6:
+					sobel(altura, largura, imagem);
+					cout << "\n---- Efeito aplicado com sucesso ----\n";
+					break;
+				default:
+					cout << "---- Opcao invalida ----\n";
+					break;
+			}
+		}
+
+		if (sair == true) break;
 	}
 	
 	//*** FIM DO TRATAMENTO DA IMAGEM ***//
@@ -215,7 +269,7 @@ int main() {
 		cout << "Deseja salvar o arquivo como uma nova imagem? (S / N) \n";
 		cin >> salvarNovo;
 
-		if (salvarNovo == 'S' || salvarNovo == 's' || salvarNovo == 'N' || salvarNovo == 'N'){
+		if (salvarNovo == 'S' || salvarNovo == 's' || salvarNovo == 'N' || salvarNovo == 'n'){
 			break;
 		}
 		else{
@@ -229,7 +283,7 @@ int main() {
 		novaImagem += ".pnm";
 		arqsaida.open(novaImagem, ios::out); //Abre arquivo para escrita
 		if (!arqsaida){
-			cout << "Nao consegui criar " << novaImagem << endl;
+			cout << endl << "Nao consegui criar " << novaImagem << endl;
 			return 0;
 		}
 	}
@@ -237,7 +291,7 @@ int main() {
 	else {
 		arqsaida.open(nomeArquivo, ios::out); //Abre arquivo para escrita
 		if (!arqsaida){
-			cout << "Nao consegui criar " << nomeArquivo << endl;
+			cout << endl << "Nao consegui criar " << nomeArquivo << endl;
 			return 0;
 		}
 	}
@@ -273,12 +327,10 @@ int main() {
 	return 0;
 }
 
-
-//Funcao para imagens em tons de cinza
 void escurecimento(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]){
 
 	int fator;
-	cout << "Qual o fator de escurecimento (1-100) ? ";
+	cout << "Qual o fator de escurecimento (1-100) ? \n";
 	cin >> fator;
 
 	for (int i = 0; i < altura; i++){
@@ -291,13 +343,13 @@ void escurecimento(int valor, int altura, int largura, unsigned char imagem[][MA
 			imagem[i][j] = (unsigned char)valor;  //modifica o pixel
 		}
 	}
+
 }
 
-//Funcao para imagens coloridas
 void escurecimento(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]){
 
 	int fator;
-	cout << "Qual o fator de escurecimento (1-100) ? ";
+	cout << "Qual o fator de escurecimento (1-100) ? \n";
 	cin >> fator;
 
 	for (int i = 0; i < altura; i++){
@@ -313,11 +365,10 @@ void escurecimento(int valor, int altura, int largura, unsigned char imagemRgb[]
 	}
 }
 
-//Funcao para imagens em tons de cinza
 void clareamento(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]){
 
 	int fator;
-	cout << "Qual o fator de clarear (1-100) ? ";
+	cout << "Qual o fator de clarear (1-100) ? \n";
 	cin >> fator;
 
 	for (int i = 0; i < altura; i++){
@@ -332,11 +383,10 @@ void clareamento(int valor, int altura, int largura, unsigned char imagem[][MAXL
 	}
 }
 
-//Funcao para imagens coloridas
 void clareamento(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]){
 
 	int fator;
-	cout << "Qual o fator de clarear (1-100) ? ";
+	cout << "Qual o fator de clarear (1-100) ? \n";
 	cin >> fator;
 
 	for (int i = 0; i < altura; i++){
@@ -352,7 +402,6 @@ void clareamento(int valor, int altura, int largura, unsigned char imagemRgb[][M
 	}
 }
 
-// Funcao para imagem em tons de cinza
 void negativo(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]){
 	
 	for (int i = 0; i < altura; i++){
@@ -364,7 +413,6 @@ void negativo(int valor, int altura, int largura, unsigned char imagem[][MAXLARG
 	}
 }
 
-//Funcao para imagens coloridas
 void negativo(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]){
 	
 	for (int i = 0; i < altura; i++){
@@ -377,7 +425,6 @@ void negativo(int valor, int altura, int largura, unsigned char imagemRgb[][MAXL
 	}
 }
 
-//Funcao para imagens em tons de cinza
 void espelharVertical(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]){
 	for (int i = 0; i < altura; i++){
 		for (int j = 0; j < (largura/2); j++){
@@ -388,7 +435,6 @@ void espelharVertical(int valor, int altura, int largura, unsigned char imagem[]
 	}
 }	
 
-//Funcao para imagens coloridas
 void espelharVertical(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]){
 	for (int i = 0; i < altura; i++){
 		for (int j = 0; j < (largura/2); j++){
@@ -401,7 +447,6 @@ void espelharVertical(int valor, int altura, int largura, unsigned char imagemRg
 	}
 }
 
-//funcao para imagens em tons de cinza
 void espelharHorizontal(int valor, int altura, int largura, unsigned char imagem[][MAXLARGURA]){
 	for (int i = 0; i < altura/2; i++){
 		for (int j = 0; j < (largura); j++){
@@ -412,7 +457,6 @@ void espelharHorizontal(int valor, int altura, int largura, unsigned char imagem
 	}
 }
 
-//funcao para imagens coloridas
 void espelharHorizontal(int valor, int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]){
 	for (int i = 0; i < altura/2; i++){
 		for (int j = 0; j < (largura); j++){
@@ -442,8 +486,7 @@ void tonsDeCinza(int tratamento, int altura, int largura, unsigned char imagemRg
 	}
 }
 
-void sobel(int altura, int largura, unsigned char imagem[][MAXLARGURA][RGB]){
-	int valorSobelX = 0, valorSobelY = 0;
+void sobel(int altura, int largura, unsigned char imagem[][MAXLARGURA]){
 
     float kernelX[3][3] =
     { { -1, 0, 1 },
@@ -455,20 +498,16 @@ void sobel(int altura, int largura, unsigned char imagem[][MAXLARGURA][RGB]){
       { 0,  0,  0 },
       { 1,  2,  1 } };
 
-
 	for(int i = 1; i < altura - 1; i++) { 
 		for(int j = 1; j < largura - 1; j++) {
 			for(int k = 0; k < RGB; k++) {
 
-				sobelX[i][j][k] = (int)(imagemRgb[i-1][j-1][k] * kernelX[1][1] + imagemRgb[i-1][j+1][k] * kernelX[1][3] + imagemRgb[i][j-1][k] * kernelX[2][1] + imagemRgb[i][j+1][k] * kernelX[2][3] + imagemRgb[i+1][j-1][k] * kernelX[3][1] + imagemRgb[i+1][j+1][k] * kernelX[3][3]);
-
-				//valorSobelX = sqrt(valorSobelX * valorSobelX); 
-				//cout << sobelX[i][j][k] << endl;
+				sobelX[i][j][k] = (int)( (imagemRgb[i-1][j-1][k] * kernelX[1][1]) + (imagemRgb[i-1][j+1][k] * kernelX[1][3]) + (imagemRgb[i][j-1][k] * kernelX[2][1]) + (imagemRgb[i][j+1][k] * kernelX[2][3]) + (imagemRgb[i+1][j-1][k] * kernelX[3][1]) + (imagemRgb[i+1][j+1][k] * kernelX[3][3]) );
 
 				if (sobelX[i][j][k] > 225) sobelX[i][j][k] = 255;
 				if (sobelX[i][j][k] < 0) sobelX[i][j][k]= 0;
 				
-				sobelY[i][j][k] = (int)(imagemRgb[i-1][j-1][k] * kernelY[1][1] + imagemRgb[i-1][j][k] * kernelY[1][2] + imagemRgb[i-1][j+1][k] * kernelY[1][3] + imagemRgb[i+1][j-1][k] * kernelY[3][1] + imagemRgb[i+1][j][k] * kernelY[3][2] + imagemRgb[i+1][j+1][k] * kernelY[3][3]);
+				sobelY[i][j][k] = (int)( (imagemRgb[i-1][j-1][k] * kernelY[1][1]) + (imagemRgb[i-1][j][k] * kernelY[1][2]) + (imagemRgb[i-1][j+1][k] * kernelY[1][3]) + (imagemRgb[i+1][j-1][k] * kernelY[3][1]) + (imagemRgb[i+1][j][k] * kernelY[3][2]) + (imagemRgb[i+1][j+1][k] * kernelY[3][3]) );
 
 				if (sobelY[i][j][k] > 225) sobelY[i][j][k] = 255;
 				if (sobelY[i][j][k] < 0) sobelY[i][j][k]= 0;
@@ -477,15 +516,12 @@ void sobel(int altura, int largura, unsigned char imagem[][MAXLARGURA][RGB]){
 		}
 	}
 
-	int valor;
-
 	for(int i = 1; i < altura -1; i++) {
 		for(int j = 1; j < largura -1; j++) {
 			for(int k = 0; k < RGB; k++) {
 				sobelM[i][j][k] = (sobelX[i][j][k] + sobelY[i][j][k]) / 2;
 
 				//sobelM[i][j][k] = sqrt(sobelX[i][j][k]*sobelX[i][j][k] + sobelY[i][j][k]*sobelY[i][j][k]);
-
 			}
 		}
 	}
@@ -498,7 +534,164 @@ void sobel(int altura, int largura, unsigned char imagem[][MAXLARGURA][RGB]){
 		}
 	}
 	
+}
+
+void sobel(int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]){
+
+    float kernelX[3][3] =
+    { { -1, 0, 1 },
+      { -2, 0, 2 },
+      { -1, 0, 1 } };
+
+    float kernelY[3][3] =
+    { { -1, -2, -1 },
+      { 0,  0,  0 },
+      { 1,  2,  1 } };
+
+	for(int i = 1; i < altura - 1; i++) { 
+		for(int j = 1; j < largura - 1; j++) {
+			for(int k = 0; k < RGB; k++) {
+
+				sobelX[i][j][k] = (int)( (imagemRgb[i-1][j-1][k] * kernelX[1][1]) + (imagemRgb[i-1][j+1][k] * kernelX[1][3]) + (imagemRgb[i][j-1][k] * kernelX[2][1]) + (imagemRgb[i][j+1][k] * kernelX[2][3]) + (imagemRgb[i+1][j-1][k] * kernelX[3][1]) + (imagemRgb[i+1][j+1][k] * kernelX[3][3]) );
+
+				if (sobelX[i][j][k] > 225) sobelX[i][j][k] = 255;
+				if (sobelX[i][j][k] < 0) sobelX[i][j][k]= 0;
+				
+				sobelY[i][j][k] = (int)( (imagemRgb[i-1][j-1][k] * kernelY[1][1]) + (imagemRgb[i-1][j][k] * kernelY[1][2]) + (imagemRgb[i-1][j+1][k] * kernelY[1][3]) + (imagemRgb[i+1][j-1][k] * kernelY[3][1]) + (imagemRgb[i+1][j][k] * kernelY[3][2]) + (imagemRgb[i+1][j+1][k] * kernelY[3][3]) );
+
+				if (sobelY[i][j][k] > 225) sobelY[i][j][k] = 255;
+				if (sobelY[i][j][k] < 0) sobelY[i][j][k]= 0;
+
+			}			
+		}
+	}
+
+	for(int i = 1; i < altura -1; i++) {
+		for(int j = 1; j < largura -1; j++) {
+			for(int k = 0; k < RGB; k++) {
+				sobelM[i][j][k] = (sobelX[i][j][k] + sobelY[i][j][k]) / 2;
+
+				//sobelM[i][j][k] = sqrt(sobelX[i][j][k]*sobelX[i][j][k] + sobelY[i][j][k]*sobelY[i][j][k]);
+			}
+		}
+	}
+
+	for(int i = 1; i < altura -1; i++) {
+		for(int j = 1; j < largura -1; j++) {
+			for(int k = 0; k < RGB; k++) {
+				imagemRgb[i][j][k] = (unsigned char)sobelM[i][j][k]; // Sobrescreve a imagem com as mudancas;
+			}
+		}
+	}
+	
+}
+
+void convolution(int altura, int largura, unsigned char imagemRgb[][MAXLARGURA][RGB]){
+
+	int kernelAltura = 3, kernelLargura = 3, contador;
+
+	int kernel[3][3]{
+		{1, 0, 0},
+		{0, 1, 0},
+		{0, 0, 1}
+	};
+
+
+	for (int i = 1; i < altura - 1; i++){
+		for (int j = 1; j < largura -1; j++){
+			contador = 0;
+			for (int k = 0; k < RGB; k++){
+
+				for (int l = 0 ; l < kernelAltura; l++){
+					for (int m = 0; m < kernelLargura; m++){
+						contador += (int)imagemRgb[i][j][k] * kernel[l][m];
+					}
+				}
+
+				sobelM[i][j][k] = (unsigned char)contador;
+			}
+		}
+	}
+
+	for(int i = 1; i < altura -1; i++) {
+		for(int j = 1; j < largura -1; j++) {
+			for(int k = 0; k < RGB; k++) {
+				imagemRgb[i][j][k] = (unsigned char)sobelM[i][j][k]; // Sobrescreve a imagem com as mudancas;
+			}
+		}
+	}
+}
+
+void mudancaDeCor(int altura, int largura, int valor){
+
+	//Variaveis e auxiliares mudancaDeCor
+	bool red = false, green = false, blue = false;
+	int fatorR, fatorG, fatorB;
+
+	// Definicao dos valores a serem a alterados
+	cout << "Vermelho\n";
+	fatorR = fatorValidacao();
+	if (fatorR != 0) red = true;
+	cout << "Verde\n";
+	fatorG = fatorValidacao();
+	if (fatorG != 0) green = true;
+	cout << "Azul\n";
+	fatorB = fatorValidacao();
+	if (fatorB != 0) blue = true;
+
+	for (int i = 0; i < altura; i++){
+		for (int j = 0; j < largura; j++){
+			for (int k = 0; k < 3; k++){
+
+				if (k == 0 && red == true){
+
+					valor = (int)imagemRgb[i][j][k];
+					valor += fatorR;
+
+					if (valor > 255) valor = 255;
+					if (valor < 0) valor = 0;
+
+				}
+
+				if (k == 1 && green == true){
+
+					valor = (int)imagemRgb[i][j][k];
+					valor += fatorG;
+
+					if (valor > 255) valor = 255;
+					if (valor < 0) valor = 0;
+
+				}
+
+				if (k == 2 && blue ==  true){
+
+					valor = (int)imagemRgb[i][j][k];
+					valor += fatorB;
+
+					if (valor > 255) valor = 255;
+					if (valor < 0) valor = 0;
+
+				}
+
+				imagemRgb[i][j][k] = (unsigned char)valor;
+
+
+			}
+		}
+	}
 
 }
-  
 
+int fatorValidacao(){
+	int fator;
+
+	cout << "Qual o fator da mudanca (-100 a 100, 0 = sem mudancas) ? \n";
+	cin >> fator;
+	while (fator < -100 || fator > 100){
+		cout << "Valor invalido\n";
+		cout << "Qual o fator da mudanca (-110 a 100, 0 = sem mudancas) ? \n";
+		cin >> fator;
+	}
+
+	return fator;
+}
